@@ -1,0 +1,48 @@
+name: 📦 Order — I've paid / 我已付款
+description: Submit your remittance reference to receive the download package. 提交汇款参考号以获取下载包。
+title: "[ORDER] "
+labels: ["order"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## Before you fill this in / 填写前请先完成付款
+
+        1. Go to **https://remit.alipay.com**
+        2. Send the amount for your tier (Starter $29 / Pro $99 / Team $499)
+        3. Recipient: Alipay ID `18697066422` · Last name `ZHU` · First name `MEI YAN`
+        4. **Purpose must be `Service Fee`** — otherwise Alipay will refund it
+        5. Copy the remittance reference number, paste it below
+
+        Answered automatically, usually within ~30 seconds.
+        本表单由自动化工作流处理，通常 30 秒内回复。
+
+  - type: dropdown
+    id: tier
+    attributes:
+      label: "tier / 档位"
+      description: "Which tier did you pay for? 你购买的是哪一档？"
+      options:
+        - starter
+        - pro
+        - team
+    validations:
+      required: true
+
+  - type: input
+    id: reference
+    attributes:
+      label: "reference / 汇款参考号"
+      description: "The reference number from remit.alipay.com (letters/numbers, at least 6 characters). remit.alipay.com 给出的参考号，至少 6 位。"
+      placeholder: "ABC12345678"
+    validations:
+      required: true
+
+  - type: input
+    id: email
+    attributes:
+      label: "email / 邮箱（可选）"
+      description: "Only used to re-send the package if the link fails. 仅在链接失效时用于补发。"
+      placeholder: "you@corp.com"
+    validations:
+      required: false
