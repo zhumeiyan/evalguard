@@ -82,6 +82,27 @@ footer{padding:36px 0 60px;color:#8b939e;font-size:14px}
   <p>Example: canon entry #23 is <i>“a silent failure that produces a clean output is indistinguishable from success unless you check”</i>. That single entry has now caused bugs in evalguard itself <b>three separate times</b> — including once where a rule was muted by a comment in the very file it was scanning. It's in the changelog.</p>
 </div>
 
+<div class="sec" id="freescan">
+  <h2>Try it on your own script — free, no install</h2>
+  <p>Open an issue, paste your eval script, and a bot runs the free tier and posts the report back. Pure static analysis: <b>your code is never executed</b>. No install, no email, no signup.</p>
+  <a class="cta" href="https://github.com/zhumeiyan/evalguard/issues/new?labels=scan&amp;template=scan.md">Scan my script free &rarr;</a>
+
+  <h3>A real report (from a real request)</h3>
+  <p>The user pasted a RAG eval harness that printed <code>ACCURACY 0.87</code> and asked whether the number meant anything. evalguard's reply:</p>
+<pre>evalguard free-tier report · 4 findings
+
+| sev     | rule   | line | what                                    |
+|---------|--------|------|-----------------------------------------|
+| BLOCKER | EG002  | 1    | metric reported, no baseline symbol     |
+| WARN    | EG005  | 9    | hits / len(cases)                       |
+| BLOCKER | EG006  | 17   | bare/silent except                      |
+| WARN    | EG012  | 1    | missing positive control + baseline     |
+
+2 blocker · 2 warn</pre>
+  <p>The answer to "is 0.87 good?" is: <b>unknowable from this script</b>. There is no random baseline, so 0.87 could be far below chance on a skewed set; and the bare <code>except</code> means some of those 40 cases may have failed silently and still counted as non-hits. That is the class of bug this tool exists for.</p>
+  <p style="font-size:14px;color:#6b7480">Free tier = 10 rules. The report says what it found, not that your script is correct.</p>
+</div>
+
 <div class="sec">
   <h2>Pricing</h2>
 
