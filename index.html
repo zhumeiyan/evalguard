@@ -45,7 +45,7 @@ footer{padding:36px 0 60px;color:#8b939e;font-size:14px}
 <header>
   <h1>evalguard</h1>
   <p class="tag">A static checker for LLM &amp; agent evaluation scripts. It finds the bugs that don't crash your code — the ones that quietly make your numbers mean something else.</p>
-  <a class="cta" href="#buy">Get evalguard — from $29</a>
+  <a class="cta" href="#freescan">Try it free — paid tiers paused</a>
   <p style="margin:16px 0 0;font-size:14px;color:#6b7480">Pay by Alipay cross-border remittance · automated delivery in ~30 seconds</p>
 </header>
 
@@ -75,7 +75,14 @@ footer{padding:36px 0 60px;color:#8b939e;font-size:14px}
   </table>
   <p>The second row is the interesting one. Those rules were our flagship — "you reported accuracy with no random baseline" is the headline example on this page's predecessor. On real code 54 of 55 were false: they fire on metric libraries and framework plumbing, where the thing they accuse you of omitting was never supposed to exist. The claim was literally true and practically useless.</p>
   <p>So we turned them off and shipped three rules instead of twenty-six. <b>The precision of what remains is 90%</b> (Wilson 95% CI 0.70–0.97), measured on files from projects we had never scanned before.</p>
-  <p><b>What we are bad at, stated plainly:</b> on professional evaluation frameworks the shipped rules fire about 2–3 times per 100 KB — on 12 such files they were silent on 9 of them. If you maintain a mature eval library, this tool will likely tell you nothing. It is built for the eval script you wrote last week, not for the one a hundred people reviewed.</p>
+  <p><b>What we are bad at, stated plainly — with the numbers from this week:</b> we tested the shipped rules on code that is <i>not</i> eval code at all, to check whether the silence was a domain problem. It wasn't.</p>
+  <table>
+    <tr><th>Corpus (never scanned before)</th><th>Findings per 100 KB</th><th>Files it said nothing about</th></tr>
+    <tr><td>7 mature libraries — requests, flask, scrapy, celery, yt-dlp, fastapi, httpie</td><td><b>0.9</b></td><td><b>13 of 14</b></td></tr>
+    <tr><td>8 low-star projects (5–67 stars)</td><td><b>1.6</b></td><td><b>13 of 15</b></td></tr>
+  </table>
+  <p>We then removed every guard check and re-ran, to find out whether we had over-pruned. Un-pruned, the low-star corpus produced 29 findings of which <b>1</b> was real — 3.4%. The rest were <code>except Exception</code> with a logger, typed retries like <code>except (OSError, ValueError): continue</code>, and handlers carrying <code># noqa: BLE001</code> with a written reason. Those are correct code, not defects. So the pruning was necessary, not excessive: <b>the silence is real.</b></p>
+  <p><b>Consequence:</b> the paid tiers are paused. A tool that speaks once per 100 KB — and is wrong a third of the time when it does — is not something we will take money for. The free tier stays up. If you maintain a mature library this tool will probably tell you nothing, and we would rather say that here than in a refund email.</p>
 </div>
 
 <div class="sec">
