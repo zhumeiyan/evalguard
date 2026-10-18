@@ -57,23 +57,25 @@ footer{padding:36px 0 60px;color:#8b939e;font-size:14px}
   <h3>What it looks like</h3>
 <pre>$ evalguard train_eval.py
 
-[BLOCK] EG002  no random baseline reported alongside accuracy
-[BLOCK] EG006  bare `except: pass` converts real errors into clean runs
-[BLOCK] EG008  recall measured on the exported library set
-[WARN ] EG005  division without guarding the denominator
+[WARN ] EG005  L24  hits / len(golds)            — denominator not guarded
+[WARN ] EG006  L29  bare/silent except            — real errors become clean runs
+[WARN ] EGP01  L38  silent handler in scoring loop
 
-3 blockers, 1 warning — exit code 1</pre>
+3 findings — exit code 0 (warnings do not fail the build by default)</pre>
+  <p style="font-size:14px;color:#6b7480">Three rules ship. That number went <i>down</i>, not up — see <a href="#measured">Measured, not claimed</a>.</p>
 </div>
 
 <div class="sec">
-  <h2>Measured, not claimed</h2>
+  <h2 id="measured">Measured, not claimed</h2>
+  <p>We ran the rules against <b>real, professionally written evaluation code</b> — 55 files from 23 open-source projects (lm-evaluation-harness, HELM, BIG-bench, SWE-bench, inspect_ai, olmes, ragas, DeepEval, MLflow, unitxt, TruLens, FastChat, Haystack, Phoenix, promptbench, ...). Then we read every single finding at the line it pointed to and asked: <i>would a reviewer looking at this line agree?</i></p>
   <table>
-    <tr><th>Sample</th><th>Blockers</th><th>Warnings</th><th>Result</th></tr>
-    <tr><td>Script seeded with 16 known defects</td><td>4</td><td>11</td><td><b>16/16 caught</b></td></tr>
-    <tr><td>Script written correctly on purpose</td><td>0</td><td>0</td><td><b>0 false positives</b></td></tr>
+    <tr><th>Rule class</th><th>Findings confirmed</th><th>Status</th></tr>
+    <tr><td>Syntax — unguarded division, bare except, silent handler in a scoring loop</td><td><b>18 of 20</b></td><td>ships</td></tr>
+    <tr><td>Methodology — no baseline, no held-out set, no spread, no order swap</td><td><b>1 of 55</b></td><td><b>switched off</b></td></tr>
   </table>
-  <p>The second row matters more than the first. A linter that cries wolf gets turned off. evalguard is quiet on correct code.</p>
-  <p>It has also been run against a third-party public repo (CC BY 4.0). First pass produced 1 blocker and 3 warnings — <b>3 of those 4 were our own false positives</b>, and we fixed the rules. After the fix: 0 blockers, 1 warning, and that one is a real divide-by-zero. That history is documented in the package, not hidden.</p>
+  <p>The second row is the interesting one. Those rules were our flagship — "you reported accuracy with no random baseline" is the headline example on this page's predecessor. On real code 54 of 55 were false: they fire on metric libraries and framework plumbing, where the thing they accuse you of omitting was never supposed to exist. The claim was literally true and practically useless.</p>
+  <p>So we turned them off and shipped three rules instead of twenty-six. <b>The precision of what remains is 90%</b> (Wilson 95% CI 0.70–0.97), measured on files from projects we had never scanned before.</p>
+  <p><b>What we are bad at, stated plainly:</b> on professional evaluation frameworks the shipped rules fire about 2–3 times per 100 KB — on 12 such files they were silent on 9 of them. If you maintain a mature eval library, this tool will likely tell you nothing. It is built for the eval script you wrote last week, not for the one a hundred people reviewed.</p>
 </div>
 
 <div class="sec">
@@ -89,18 +91,17 @@ footer{padding:36px 0 60px;color:#8b939e;font-size:14px}
 
   <h3>A real report (from a real request)</h3>
   <p>The user pasted a RAG eval harness that printed <code>ACCURACY 0.87</code> and asked whether the number meant anything. evalguard's reply:</p>
-<pre>evalguard free-tier report · 4 findings
+<pre>evalguard report (current build) · 2 findings
 
-| sev     | rule   | line | what                                    |
-|---------|--------|------|-----------------------------------------|
-| BLOCKER | EG002  | 1    | metric reported, no baseline symbol     |
-| WARN    | EG005  | 9    | hits / len(cases)                       |
-| BLOCKER | EG006  | 17   | bare/silent except                      |
-| WARN    | EG012  | 1    | missing positive control + baseline     |
+| sev  | rule   | line | what                                     |
+|------|--------|------|------------------------------------------|
+| WARN | EG005  | 9    | hits / len(cases) — denominator unguarded|
+| WARN | EG006  | 17   | bare/silent except                       |
 
-2 blocker · 2 warn</pre>
-  <p>The answer to "is 0.87 good?" is: <b>unknowable from this script</b>. There is no random baseline, so 0.87 could be far below chance on a skewed set; and the bare <code>except</code> means some of those 40 cases may have failed silently and still counted as non-hits. That is the class of bug this tool exists for.</p>
-  <p style="font-size:14px;color:#6b7480">Free tier = 10 rules. The report says what it found, not that your script is correct.</p>
+0 blocker · 2 warn</pre>
+  <p>The bare <code>except</code> means some of those 40 cases may have failed silently and still counted as non-hits — so the 0.87 is computed over an unknown denominator. That part the tool still gets right.</p>
+  <p style="font-size:14px;color:#6b7480"><b>An earlier build of this page also reported "no random baseline" and "no positive control" on this same script.</b> Those two rules are switched off now: run against professional evaluation code they were right 1 time in 55. We kept the honest part of the answer and dropped the part that was mostly noise.</p>
+  <p style="font-size:14px;color:#6b7480">Free tier = the 3 shipped rules. The report says what it found, not that your script is correct.</p>
 </div>
 
 <div class="sec">
@@ -108,8 +109,8 @@ footer{padding:36px 0 60px;color:#8b939e;font-size:14px}
 
   <div class="tier">
     <div class="tname">Free · MIT</div>
-    <div class="price">$0 <span>— CLI + 10 rules</span></div>
-    <p style="margin-top:10px;margin-bottom:0"><code>pip install evalguard</code> · zero dependencies · JSON output · exit 1 on blockers. The four highest-frequency rules are free forever: unguarded division, ratio without numerator/denominator, hardcoded threshold, untested external channel.</p>
+    <div class="price">$0 <span>— CLI + 3 verified rules</span></div>
+    <p style="margin-top:10px;margin-bottom:0"><code>pip install evalguard</code> · zero dependencies · JSON output · exit 1 on blockers. The three rules that survived measurement ship free and stay free: <b>unguarded division</b>, <b>bare / silent except</b>, <b>silent handler inside a scoring loop</b>.</p>
   </div>
 
   <div class="tier best">
@@ -122,7 +123,7 @@ footer{padding:36px 0 60px;color:#8b939e;font-size:14px}
   <div class="tier">
     <div class="tname">evalguard Pro</div>
     <div class="price">$99 <span>— one-time, 12 months of updates</span></div>
-    <p style="margin-top:10px;margin-bottom:0">Everything in Canon, plus 26+ rules, CI templates (GitHub Actions, GitLab CI, pre-commit), HTML report output, and every new rule added for 12 months.</p>
+    <p style="margin-top:10px;margin-bottom:0">Everything in Canon, plus CI templates (GitHub Actions, GitLab CI, pre-commit), HTML report output, priority on new rules, and every rule added for 12 months as they clear the same measured bar the first three had to clear.</p>
     <p style="margin-top:14px"><a class="cta" style="padding:9px 18px;font-size:14px" href="https://github.com/zhumeiyan/evalguard-worker/issues/new?labels=order&title=%5BORDER%5D+pro&body=tier%3A+pro%0Areference%3A+">I've paid — instant download</a></p>
   </div>
 
